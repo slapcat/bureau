@@ -1,0 +1,8 @@
+debug: true
+update_interval: 5
+xhost_specific_entries: true
+restart_service_on_change: true
+binddn: testdn
+password:
+base: ou=config,dc=nabasny,dc=com
+
