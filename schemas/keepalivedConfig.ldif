@@ -1,0 +1,30 @@
+version: 1
+
+dn: cn=keepalivedConfig,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: keepalivedConfig
+olcAttributeTypes: {0}( 1.3.6.1.4.1.59010.1.1 NAME 'birthDate' DESC 'Birthda
+ y' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNT
+ AX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE )
+olcAttributeTypes: {1}( 1.3.6.1.4.1.59010.1.2 NAME 'anniversaryDate' DESC 'A
+ nniversary' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingM
+ atch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE )
+olcAttributeTypes: {2}( 1.3.6.1.4.1.59010.1.3 NAME 'maidenName' DESC 'Maiden
+  name' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3
+ .6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {3}( 1.3.6.1.4.1.59010.1.4 NAME 'twitter' DESC 'Twitter U
+ RL' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.
+ 1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {4}( 1.3.6.1.4.1.59010.1.5 NAME 'facebook' DESC 'Facebook
+  URL' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.
+ 6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {5}( 1.3.6.1.4.1.59010.1.6 NAME 'instagram' DESC 'Instagr
+ am URL' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.
+ 3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {6}( 1.3.6.1.4.1.59010.1.7 NAME 'personalQuote' DESC 'Per
+ sonal Quote' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNT
+ AX 1.3.6.1.4.1.1466.115.121.1.15{1024} )
+olcObjectClasses: {0}( 1.3.6.1.4.1.59010.2.1 NAME 'keepalivedConfig' 
+ SUP top AUXILIARY DESC 'Configuration file for keepalived' MAY ( birthDate $ anniversaryDate $ maidenName $ twitter $ facebook $
+  instagram $ personalQuote ) )
+

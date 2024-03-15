@@ -1,17 +1,18 @@
 package main
 
 import (
-//	"fmt"
 	"reflect"
 	"os"
-    "log"
+	"log"
+	"golang.org/x/exp/slices"
 	"time"
-    "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 
 type Config struct {
 	Debug bool
+	Server string
 	Binddn string
 	Password string
 	Base string
@@ -21,33 +22,71 @@ type Config struct {
 	Files []string
 }
 
+type File struct {
+    DN string `ldap:"dn"`
+    Path string `ldap:"path"`
+	Description string `ldap:"description"`
+	CN string `ldap:"cn"`
+	ObjectClass []string `ldap:"objectClass"`
+	Data string `ldap:"data"`
+}
+
 func main() {
 	data, err := os.ReadFile("config.yaml")
-    if err != nil {
+	if err != nil {
 		log.Fatalf("error: %v", err)
-    }
+	}
 
-    c := Config{}
-    err = yaml.Unmarshal([]byte(data), &c)
-    if err != nil {
+	c := Config{}
+	err = yaml.Unmarshal([]byte(data), &c)
+	if err != nil {
 		log.Fatalf("error: %v", err)
-    } else if c.Debug == true {
-		for i := 0; i <= 7; i++ {
+	} else if c.Debug {
+		for i := 0; i <= 8; i++ {
 			key := reflect.Indirect(reflect.ValueOf(c)).Type().Field(i).Name
 			value := reflect.ValueOf(c)
-			    log.Printf(" === Loading configuration %v: %v\n", key, value.FieldByName(key))
+			log.Printf(" === Loading configuration %v: %v\n", key, value.FieldByName(key))
 		}
 	}
 
-	for {
-	// ldap bind
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	} else if c.Debug {
+		log.Printf(" === Getting hostname: %s", host)
+	}
 
-	// compare lastmodified date, load config files: based on c.files
+	hostdn := "cn=" + host + "," + c.Base
 
-	// call appropriate generator to generate file
-    
-	log.Print("test")
+    // Non-TLS Connection
+    l, err := LDAPConnect(c.Server)
+    if err != nil {
+		log.Fatalf("Connection error: %v\n", err)
+    }
+    defer l.Close()
+	result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn)
+    if err != nil {
+		log.Fatalf("LDAP search error: %v\n", err)
+    }
+
+	f := File{}
+
+	for _, entry := range result.Entries {
+
+		err = entry.Unmarshal(&f); 
+		if err != nil {
+			log.Fatalf("Unmarshal error: %v\n", err)
+		} 
+
+		if slices.Contains(f.ObjectClass, "keepalivedConfig") {
+			if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
+			// _, err = GenerateKeepalived(f)
+		} else {
+			if c.Debug { log.Printf("Generating default config for %s at %s\n", f.CN, f.Path) }
+			// _, err = GenerateDefault(f)
+		}
+	}
+
 	time.Sleep(time.Duration(c.Update) * time.Second)
-	// sleep
-	}	
 }
+

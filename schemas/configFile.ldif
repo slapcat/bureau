@@ -1,0 +1,19 @@
+dn: cn=configFile,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: configFile
+olcAttributeTypes: {0}( 1.3.6.1.4.1.59010.1.8 NAME 'path'
+  DESC 'Path for configuration file'
+  EQUALITY caseExactMatch
+  SUBSTR caseExactSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{1024}
+  SINGLE-VALUE )
+olcAttributeTypes: {1}( 1.3.6.1.4.1.59010.1.9 NAME 'data'
+  DESC 'Generic configuration file data'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcObjectClasses: {0}( 1.3.6.1.4.1.59010.3.1 NAME 'configFile'
+  SUP top STRUCTURAL
+  DESC 'Schema for generic configuration files'
+  MUST ( cn $ path )
+  MAY ( description $ data ) )
