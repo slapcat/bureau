@@ -23,8 +23,8 @@ type Config struct {
 }
 
 type File struct {
-    DN string `ldap:"dn"`
-    Path string `ldap:"path"`
+	DN string `ldap:"dn"`
+	Path string `ldap:"path"`
 	Description string `ldap:"description"`
 	CN string `ldap:"cn"`
 	ObjectClass []string `ldap:"objectClass"`
@@ -56,7 +56,8 @@ func main() {
 		log.Printf(" === Getting hostname: %s", host)
 	}
 
-	hostdn := "cn=" + host + "," + c.Base
+	//hostdn := "cn=" + host + "," + c.Base
+	hostdn := "cn=pequod," + c.Base
 
     // Non-TLS Connection
     l, err := LDAPConnect(c.Server)
@@ -73,20 +74,25 @@ func main() {
 
 	for _, entry := range result.Entries {
 
-		err = entry.Unmarshal(&f); 
+		err = entry.Unmarshal(&f);
 		if err != nil {
 			log.Fatalf("Unmarshal error: %v\n", err)
-		} 
+		}
 
 		if slices.Contains(f.ObjectClass, "keepalivedConfig") {
 			if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
 			// _, err = GenerateKeepalived(f)
 		} else {
 			if c.Debug { log.Printf("Generating default config for %s at %s\n", f.CN, f.Path) }
-			// _, err = GenerateDefault(f)
+			err = GenerateDefault(f.Path, f.Data)
+			if err != nil {
+				log.Fatalf("File creation error: %v\n", err)
+			}
 		}
 	}
 
 	time.Sleep(time.Duration(c.Update) * time.Second)
 }
+
+
 
