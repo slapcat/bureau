@@ -2,6 +2,7 @@ package main
 
 import "os"
 import "log"
+
 func GenerateDefault(path string, data string) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -17,19 +18,9 @@ func GenerateDefault(path string, data string) error {
 	return nil
 }
 
-func GenerateKeepalived(path string, data string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
+func GenerateKeepalived(file interface{}) error {
 
-
-	//unpack struct
-	_, err = f.WriteString(data)
-	defer f.Close()
-	if err != nil {
-		return err
-	}
-
+	f := file.(File)
+	log.Println(f)
 	return nil
 }

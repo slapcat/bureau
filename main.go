@@ -84,7 +84,8 @@ func main() {
 			// _, err = GenerateKeepalived(f)
 		} else {
 			if c.Debug { log.Printf("Generating default config for %s at %s\n", f.CN, f.Path) }
-			err = GenerateDefault(f.Path, f.Data)
+			//err = GenerateDefault(f.Path, f.Data)
+			err = GenerateKeepalived(f)
 			if err != nil {
 				log.Fatalf("File creation error: %v\n", err)
 			}
