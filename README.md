@@ -1,8 +1,10 @@
 # BUREAU: Centralized Configuration Agent
 
-A lightweight agent for syncing any and all configuration files with LDAP. Includes custom schemas for supported services as well as a default catchall schema.
+A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall scheme.
 
-# Currently Supported
+# Quickstart
+
+# Built-in Schemas
 - Default
   - Any file, any location
 - Keepalived
@@ -11,8 +13,9 @@ A lightweight agent for syncing any and all configuration files with LDAP. Inclu
   - VRRP instance
 
 # Coming Soon
-- apache2
-- sssd
-- Kubernetes (configMap) support
+- [ ] apache2
+- [ ] sssd
+- [ ] ssh
+- [ ] Kubernetes (configMap) support
 
 Raise an issue to request other supported services.

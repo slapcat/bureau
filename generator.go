@@ -3,8 +3,13 @@ package main
 import "os"
 import "log"
 
-func GenerateDefault(path string, data string) error {
+func GenerateDefault(path string, data string, perm uint64) error {
 	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(path, os.FileMode(perm))
 	if err != nil {
 		return err
 	}
