@@ -3,13 +3,13 @@ package main
 import "os"
 import "log"
 
-func GenerateDefault(path string, data string, perm uint64) error {
+func GenerateDefault(path string, data string) error {
+
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-
-	err = os.Chmod(path, os.FileMode(perm))
+	err = os.Chmod(path, 0600)
 	if err != nil {
 		return err
 	}
@@ -28,4 +28,5 @@ func GenerateKeepalived(file interface{}) error {
 	f := file.(File)
 	log.Println(f)
 	return nil
+	
 }

@@ -15,8 +15,8 @@ olcAttributeTypes: {1}( 1.3.6.1.4.1.59010.1.9 NAME 'data'
   SINGLE-VALUE )
 olcAttributeTypes: {2}( 1.3.6.1.4.1.59010.1.10 NAME 'permissions'
   DESC 'Linux file permissions of the configuration file'
-  EQUALITY integerMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  EQUALITY numericStringMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.36
   SINGLE-VALUE )
 olcAttributeTypes: {3}( 1.3.6.1.4.1.59010.1.35 NAME 'serviceName'
   DESC 'Systemd service using this configuration file'

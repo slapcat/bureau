@@ -25,8 +25,8 @@ func LDAPSearch(l *ldap.Conn, binddn string, password string, base string) (*lda
         0,
         0,
         false,
-        "(&(objectClass=configFile)(cn=test))",
-        []string{},
+        "(objectClass=configFile)",
+        []string{"entryUUID", "*"},
         nil,
     )
     result, err := l.Search(searchReq)
