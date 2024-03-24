@@ -10,15 +10,15 @@ import (
 )
 
 type Config struct {
-	Debug bool
-	Daemon bool
+	Debug bool `default:"false"`
+	Daemon bool `default:"true"`
 	Server string
 	Binddn string
 	Password string
 	Base string
-	Update int `yaml:"update_interval"`
-	Host bool `yaml:"host_specific_entries"`
-	Restart bool `yaml:"restart_service_on_change"`
+	Update int `yaml:"update_interval" default:"600"`
+	Host bool `yaml:"host_specific_entries" default:"true"`
+	Restart bool `yaml:"restart_service_on_change" default:"true"`
 	Override string `yaml:"override_hostname"`
 }
 
@@ -105,14 +105,13 @@ func main() {
 			if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
 				if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
 				err = GenerateKeepalived(f)
-				entry.PrettyPrint(1)
-				log.Println(entry.GetAttributeValue("entryUUID"))
 				if err != nil {
 					log.Fatalf("File generation error: %v\n", err)
 				}
 			} else {
 				if c.Debug { log.Printf("Generating default config for %s at %s\n", f.CN, f.Path) }
 				err = GenerateDefault(f.Path, f.Data)
+				log.Println(entry.GetAttributeValue("modifyTimestamp"))
 				if err != nil {
 					log.Fatalf("File generation error: %v\n", err)
 				}

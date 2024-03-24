@@ -25,5 +25,6 @@ A lightweight agent for syncing configuration files from LDAP. Includes custom s
 - [ ] ssh
 - [ ] systemd
 - [ ] Kubernetes (configMap) support
+- [ ] secrets management
 
 Raise an issue to request any other services you want to see supported.
