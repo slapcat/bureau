@@ -43,13 +43,13 @@ var needsUpdate []string
 func main() {
 
 	// load bureau config
-	data, err := os.ReadFile("bureau.yaml")
+	conf, err := findConfig()
   if err != nil {
-    log.Fatalf("error: %v", err)
+    log.Fatalf("Error reading config file: %v", err)
   }
 
   c := Config{}
-  err = yaml.Unmarshal([]byte(data), &c) 
+  err = yaml.Unmarshal([]byte(conf), &c) 
   if err != nil {
     log.Fatalf("error: %v", err)
   } else if c.Debug {
@@ -168,4 +168,24 @@ func main() {
 	}
 }
 
+func findConfig() ([]byte, error) {
 
+	var conf string
+
+	home, err := os.UserHomeDir()
+	locations := []string{home + "/.bureau.yaml", home + "/.config/bureau/bureau.yaml", "/etc/bureau/bureau.yaml", "bureau.yaml"}
+
+	for _, path := range locations {	
+		if _, err = os.Stat(path); err == nil {
+			conf = path
+			break
+		}
+	}
+
+	data, err := os.ReadFile(conf)
+  if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
