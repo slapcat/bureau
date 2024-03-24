@@ -1,12 +1,12 @@
 package main
 
 import (
-	"reflect"
 	"os"
 	"log"
-	"golang.org/x/exp/slices"
 	"time"
+	"reflect"
 	"gopkg.in/yaml.v3"
+	"golang.org/x/exp/slices"
 )
 
 type Config struct {
@@ -29,7 +29,7 @@ type File struct {
 	CN string `ldap:"cn"`
 	ObjectClass []string `ldap:"objectClass"`
 	Data string `ldap:"data"`
-	Perm int `ldap:"permissions"`
+	Perm string `ldap:"permissions"`
 }
 
 type Kalived struct {
@@ -42,8 +42,7 @@ var needsUpdate []string
 
 func main() {
 
-	paths = make(map[string]string)
-
+	// load bureau config
 	data, err := os.ReadFile("bureau.yaml")
   if err != nil {
     log.Fatalf("error: %v", err)
@@ -65,6 +64,7 @@ func main() {
     }   
   }
 
+	// get hostname and set search base
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -84,6 +84,8 @@ func main() {
 	}
 	if c.Debug { log.Printf(" === Looking for files in: %s", hostdn) }
 
+	// init paths map for tracking updates
+	paths = make(map[string]string)
 
 	for {
 
@@ -94,13 +96,14 @@ func main() {
 		}
 		defer l.Close()
 
-		// check for changes
+		// search for timestamps
 		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp"})
 		if err != nil {
 			log.Fatalf("LDAP search error: %v\n", err)
 			continue
 		}
 
+		// mark files that need updating
 		for _, entry := range result.Entries {
 			if val, ok := paths[entry.DN]; ok {
 				if entry.GetAttributeValue("modifyTimestamp") == val {
@@ -115,7 +118,7 @@ func main() {
 			
 		}
 	
-		// search for files needing updates
+		// grab file data from LDAP
 		for _, dn := range needsUpdate {
 
 			result, err = LDAPSearch(l, c.Binddn, c.Password, dn, []string{})
@@ -126,7 +129,7 @@ func main() {
 				continue
 			}
 
-			// generate files
+			// generate files based on objectClass
 			for _, entry := range result.Entries {
 				
 				f := File{}
@@ -136,7 +139,9 @@ func main() {
 					log.Fatalf("Unmarshal error: %v\n", err)
 				}
 				
-				if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
+				if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") ||
+				slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") ||
+				slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
 					if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
 					err = GenerateKeepalived(f)
 					if err != nil {
@@ -144,7 +149,7 @@ func main() {
 					}
 				} else {
 					if c.Debug { log.Printf("Generating config file for %s at %s\n", f.CN, f.Path) }
-					err = GenerateDefault(f.Path, f.Data)
+					err = GenerateDefault(f.Path, f.Data, f.Perm)
 					if err != nil {
 						log.Fatalf("File generation error: %v\n", err)
 					}

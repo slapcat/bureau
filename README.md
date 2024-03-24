@@ -2,6 +2,8 @@
 
 A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall scheme.
 
+# Configuration
+
 # Quickstart
 1. Install LDAP schemas and add configuration files.
 
@@ -21,9 +23,7 @@ A lightweight agent for syncing configuration files from LDAP. Includes custom s
 
 
 # Coming Soon
-- [ ] sssd
-- [ ] ssh
-- [ ] systemd
+- [ ] additional schemas (ssh, system, sssd)
 - [ ] Kubernetes (configMap) support
 - [ ] secrets management
 
