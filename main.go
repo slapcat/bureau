@@ -37,27 +37,33 @@ type Kalived struct {
 
 }
 
-func main() {
-	data, err := os.ReadFile("config.yaml")
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
+var paths map[string]string
+var needsUpdate []string
 
-	c := Config{}
-	err = yaml.Unmarshal([]byte(data), &c)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	} else if c.Debug {
-		for i := 0; i <= 9; i++ {
-			key := reflect.Indirect(reflect.ValueOf(c)).Type().Field(i).Name
-			value := reflect.ValueOf(c)
-			if key == "Password" && c.Password != "" {
-				log.Printf(" === Loading configuration %v: %s\n", key, "***HIDDEN PASSWORD***")
-			} else {
-				log.Printf(" === Loading configuration %v: %v\n", key, value.FieldByName(key))
-			}
-		}
-	}
+func main() {
+
+	paths = make(map[string]string)
+
+	data, err := os.ReadFile("bureau.yaml")
+  if err != nil {
+    log.Fatalf("error: %v", err)
+  }
+
+  c := Config{}
+  err = yaml.Unmarshal([]byte(data), &c) 
+  if err != nil {
+    log.Fatalf("error: %v", err)
+  } else if c.Debug {
+    for i := 0; i <= 9; i++ {
+      key := reflect.Indirect(reflect.ValueOf(c)).Type().Field(i).Name
+      value := reflect.ValueOf(c)
+      if key == "Password" && c.Password != "" {
+        log.Printf(" === Loading configuration %v: %s\n", key, "***HIDDEN PASSWORD***")
+      } else {
+        log.Printf(" === Loading configuration %v: %v\n", key, value.FieldByName(key))
+      }   
+    }   
+  }
 
 	host, err := os.Hostname()
 	if err != nil {
@@ -80,6 +86,7 @@ func main() {
 
 
 	for {
+
 		// Non-TLS Connection
 		l, err := LDAPConnect(c.Server)
 		if err != nil {
@@ -87,45 +94,73 @@ func main() {
 		}
 		defer l.Close()
 
-		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn)
+		// check for changes
+		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp"})
 		if err != nil {
 			log.Fatalf("LDAP search error: %v\n", err)
+			continue
 		}
-
 
 		for _, entry := range result.Entries {
-			
-			f := File{}
-
-			err = entry.Unmarshal(&f);
-			if err != nil {
-				log.Fatalf("Unmarshal error: %v\n", err)
-			}
-			
-			if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
-				if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
-				err = GenerateKeepalived(f)
-				if err != nil {
-					log.Fatalf("File generation error: %v\n", err)
+			if val, ok := paths[entry.DN]; ok {
+				if entry.GetAttributeValue("modifyTimestamp") == val {
+					// no update needed
+					continue
 				}
-			} else {
-				if c.Debug { log.Printf("Generating default config for %s at %s\n", f.CN, f.Path) }
-				err = GenerateDefault(f.Path, f.Data)
-				log.Println(entry.GetAttributeValue("modifyTimestamp"))
+			}
+
+			log.Printf("%s is outdated\n", entry.DN)
+			needsUpdate = append(needsUpdate, entry.DN)
+			paths[entry.DN] = entry.GetAttributeValue("modifyTimestamp")
+			
+		}
+	
+		// search for files needing updates
+		for _, dn := range needsUpdate {
+
+			result, err = LDAPSearch(l, c.Binddn, c.Password, dn, []string{})
+			if err != nil {
+				// In case dn changes before we can search again
+				// Print error but do not exit
+				log.Printf("LDAP search error: %v\n", err)
+				continue
+			}
+
+			// generate files
+			for _, entry := range result.Entries {
+				
+				f := File{}
+
+				err = entry.Unmarshal(&f);
 				if err != nil {
-					log.Fatalf("File generation error: %v\n", err)
+					log.Fatalf("Unmarshal error: %v\n", err)
+				}
+				
+				if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") || slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
+					if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
+					err = GenerateKeepalived(f)
+					if err != nil {
+						log.Fatalf("File generation error: %v\n", err)
+					}
+				} else {
+					if c.Debug { log.Printf("Generating config file for %s at %s\n", f.CN, f.Path) }
+					err = GenerateDefault(f.Path, f.Data)
+					if err != nil {
+						log.Fatalf("File generation error: %v\n", err)
+					}
 				}
 			}
 		}
 
-
+		// loop if in daemon mode
 		if c.Daemon {
+			needsUpdate = nil
 			time.Sleep(time.Duration(c.Update) * time.Second)
 		} else {
 			os.Exit(0)
 		}
+
 	}
 }
-
 
 

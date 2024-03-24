@@ -15,29 +15,7 @@ func LDAPConnect(host string) (*ldap.Conn, error) {
 	return l, nil
 }
 
-/* func LDAPCheck() {
-
-    searchReq := ldap.NewSearchRequest(
-        base,
-        ldap.ScopeWholeSubtree,
-        ldap.NeverDerefAliases,
-        0,
-        0,
-        false,
-        "(objectClass=configFile)",
-        []string{"modifyTimestamp"},
-        nil,
-    )
-
-compare timestamp with existing one if any to determine which entries to pull
-
-
-}
-
-*/
-
-
-func LDAPSearch(l *ldap.Conn, binddn string, password string, base string) (*ldap.SearchResult, error) {
+func LDAPSearch(l *ldap.Conn, binddn string, password string, base string, attr []string) (*ldap.SearchResult, error) {
 	l.Bind(binddn, password)
 
     searchReq := ldap.NewSearchRequest(
@@ -48,7 +26,7 @@ func LDAPSearch(l *ldap.Conn, binddn string, password string, base string) (*lda
         0,
         false,
         "(objectClass=configFile)",
-        []string{"modifyTimestamp", "*"},
+        attr,
         nil,
     )
     result, err := l.Search(searchReq)
