@@ -33,8 +33,33 @@ type File struct {
 }
 
 type Kalived struct {
-
-
+	Path string `ldap:"path"`
+	Perm string `ldap:"permissions"`
+	GlobalNotificationEmail	[]string `ldap:"globalNotificationEmail"`
+	GlobalNotificationEmailFrom string `ldap:"globalNotificationEmailFrom"`
+	GlobalSMTPServer string `ldap:"globalSMTPServer"`
+	GlobalSMTPConnectTimeout int `ldap:"globalSMTPConnectTimeout"`
+	GlobalLVSId string `ldap:"globalLVSId"`
+	GroupName string `ldap:"groupName"`
+	GroupMember []string `ldap:"groupMember"`
+	NotifyMasterVRRPGroup string `ldap:"notifyMasterVRRPGroup"`
+	NotifyBackupVRRPGroup string `ldap:"notifyBackupVRRPGroup"`
+	NotifyFaultVRRPGroup string `ldap:"notifyFaultVRRPGroup"`
+	InstanceName string `ldap:"instanceName"`
+	/* Need to treat next value as string since 
+	entry.Unmarshal method doesn't support bool */
+	SMTPAlert string `ldap:"smtpAlert"`
+	AuthType string `ldap:"authType"`
+	AuthPass string `ldap:"authPass"`
+	VirtualIPAddress []string `ldap:"virtualIPAddress"`
+	VirtualIPAddressExcluded []string `ldap:"virtualIPAddressExcluded"`
+	State string `ldap:"state"`
+	Interface string `ldap:"interface"`
+	McastSrcIP string `ldap:"mcastSrcIP"`
+	LVSSyncDaemonInterface string `ldap:"lvsSyncDaemonInterface"`
+	VirtualRouterID int `ldap:"virtualRouterID"`
+	Priority int `ldap:"priority"`
+	AdvertInt int `ldap:"advertInt"`
 }
 
 var paths map[string]string
@@ -89,14 +114,14 @@ func main() {
 
 	for {
 
-		// Non-TLS Connection
+		// LDAP connect
 		l, err := LDAPConnect(c.Server)
 		if err != nil {
 			log.Fatalf("Connection error: %v\n", err)
 		}
 		defer l.Close()
 
-		// search for timestamps
+		// Bind and search for timestamps
 		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp"})
 		if err != nil {
 			log.Fatalf("LDAP search error: %v\n", err)
@@ -131,24 +156,31 @@ func main() {
 
 			// generate files based on objectClass
 			for _, entry := range result.Entries {
-				
-				f := File{}
+				if slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedGlobalConfig") || slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedVRRPInstanceConfig") || slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedVRRPGroupConfig") {
 
-				err = entry.Unmarshal(&f);
-				if err != nil {
-					log.Fatalf("Unmarshal error: %v\n", err)
-				}
-				
-				if slices.Contains(f.ObjectClass, "keepalivedGlobalConfig") ||
-				slices.Contains(f.ObjectClass, "keepalivedVRRPGroupConfig") ||
-				slices.Contains(f.ObjectClass, "keepalivedVRRPInstanceConfig") {
-					if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", f.CN, f.Path) }
+					f := Kalived{}
+					err = entry.Unmarshal(&f);
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
+
+					if c.Debug { log.Printf("Generating keepalived config for %s at %s\n", entry.DN, f.Path) }
+	
 					err = GenerateKeepalived(f)
 					if err != nil {
 						log.Fatalf("File generation error: %v\n", err)
 					}
+				
 				} else {
+
+					f := File{}
+					err = entry.Unmarshal(&f);
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
+			
 					if c.Debug { log.Printf("Generating config file for %s at %s\n", f.CN, f.Path) }
+
 					err = GenerateDefault(f.Path, f.Data, f.Perm)
 					if err != nil {
 						log.Fatalf("File generation error: %v\n", err)
@@ -156,7 +188,6 @@ func main() {
 				}
 			}
 		}
-
 		// loop if in daemon mode
 		if c.Daemon {
 			needsUpdate = nil
@@ -173,7 +204,9 @@ func findConfig() ([]byte, error) {
 	var conf string
 
 	home, err := os.UserHomeDir()
-	locations := []string{home + "/.bureau.yaml", home + "/.config/bureau/bureau.yaml", "/etc/bureau/bureau.yaml", "bureau.yaml"}
+	locations := []string{home + "/.bureau.yaml",
+		home + "/.config/bureau/bureau.yaml",
+		"/etc/bureau/bureau.yaml", "bureau.yaml"}
 
 	for _, path := range locations {	
 		if _, err = os.Stat(path); err == nil {

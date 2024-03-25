@@ -35,10 +35,10 @@ func GenerateDefault(path string, data string, perm string) error {
 	return nil
 }
 
-func GenerateKeepalived(file interface{}) error {
+func GenerateKeepalived(inter interface{}) error {
 
 
-	f := file.(File)
+	f := inter.(Kalived)
 	log.Println(f)
 	return nil
 	
