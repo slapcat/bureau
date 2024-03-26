@@ -22,46 +22,6 @@ type Config struct {
 	Override string `yaml:"override_hostname"`
 }
 
-type File struct {
-	DN string `ldap:"dn"`
-	Path string `ldap:"path"`
-	Description string `ldap:"description"`
-	CN string `ldap:"cn"`
-	ObjectClass []string `ldap:"objectClass"`
-	Data string `ldap:"data"`
-	Perm string `ldap:"permissions"`
-}
-
-type Kalived struct {
-	Path string `ldap:"path"`
-	Perm string `ldap:"permissions"`
-	GlobalNotificationEmail	[]string `ldap:"globalNotificationEmail"`
-	GlobalNotificationEmailFrom string `ldap:"globalNotificationEmailFrom"`
-	GlobalSMTPServer string `ldap:"globalSMTPServer"`
-	GlobalSMTPConnectTimeout int `ldap:"globalSMTPConnectTimeout"`
-	GlobalLVSId string `ldap:"globalLVSId"`
-	GroupName string `ldap:"groupName"`
-	GroupMember []string `ldap:"groupMember"`
-	NotifyMasterVRRPGroup string `ldap:"notifyMasterVRRPGroup"`
-	NotifyBackupVRRPGroup string `ldap:"notifyBackupVRRPGroup"`
-	NotifyFaultVRRPGroup string `ldap:"notifyFaultVRRPGroup"`
-	InstanceName string `ldap:"instanceName"`
-	/* Need to treat next value as string since 
-	entry.Unmarshal method doesn't support bool */
-	SMTPAlert string `ldap:"smtpAlert"`
-	AuthType string `ldap:"authType"`
-	AuthPass string `ldap:"authPass"`
-	VirtualIPAddress []string `ldap:"virtualIPAddress"`
-	VirtualIPAddressExcluded []string `ldap:"virtualIPAddressExcluded"`
-	State string `ldap:"state"`
-	Interface string `ldap:"interface"`
-	McastSrcIP string `ldap:"mcastSrcIP"`
-	LVSSyncDaemonInterface string `ldap:"lvsSyncDaemonInterface"`
-	VirtualRouterID int `ldap:"virtualRouterID"`
-	Priority int `ldap:"priority"`
-	AdvertInt int `ldap:"advertInt"`
-}
-
 var paths map[string]string
 var needsUpdate []string
 

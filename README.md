@@ -1,8 +1,11 @@
 # BUREAU: Centralized Configuration Agent (FIRST RELEASE COMING SOON)
 
-A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall scheme.
+A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall schema.
+
+<!-- asciicinema -->
 
 # Configuration
+Bureau intelligently finds and updates relevant config files from your LDAP server, so minimal configuration is necessary.
 
 # Quickstart
 1. Install LDAP schemas and add configuration files.
@@ -22,9 +25,9 @@ A lightweight agent for syncing configuration files from LDAP. Includes custom s
 # Full Example Setup
 
 
-# Coming Soon
-- [ ] additional schemas (ssh, system, sssd)
+# v1.0 Roadmap
+- [ ] Additional schemas (ssh, system, sssd)
 - [ ] Kubernetes (configMap) support
-- [ ] secrets management
+- [ ] Secrets management
 
 Raise an issue to request any other services you want to see supported.
