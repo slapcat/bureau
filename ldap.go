@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"crypto/tls"
+	"fmt"
 	"github.com/go-ldap/ldap/v3"
 )
 
@@ -26,15 +26,15 @@ func LDAPSearch(l *ldap.Conn, binddn string, password string, base string, attr 
 	l.Bind(binddn, password)
 
 	searchReq := ldap.NewSearchRequest(
-	base,
-	ldap.ScopeWholeSubtree,
-	ldap.NeverDerefAliases,
-	0,
-	0,
-	false,
-	"(objectClass=configFile)",
-	attr,
-	nil,
+		base,
+		ldap.ScopeWholeSubtree,
+		ldap.NeverDerefAliases,
+		0,
+		0,
+		false,
+		"(objectClass=configFile)",
+		attr,
+		nil,
 	)
 	result, err := l.Search(searchReq)
 	if err != nil {
