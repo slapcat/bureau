@@ -73,8 +73,5 @@ func FormatKeepalivedGlobal(inter any) error {
 
 	KeepalivedFiles[f.Path] = KeepalivedFiles[f.Path] + newData.String()
 
-	// the map to use in main for writing files
-	log.Println(KeepalivedFiles)
 	return nil
-
 }

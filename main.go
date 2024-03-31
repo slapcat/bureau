@@ -1,14 +1,12 @@
 package main
 
 import (
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"os/exec"
 	"reflect"
 	"time"
-//	"bytes"
 )
 
 type Config struct {
@@ -25,8 +23,9 @@ type Config struct {
 }
 
 var (
-	paths map[string]string
-	needsUpdate []string
+	paths						map[string]string
+	needsUpdate			[]string
+	found						bool
 	KeepalivedFiles map[string]string
 )
 
@@ -114,6 +113,7 @@ func main() {
 		// grab file data from LDAP
 		for _, dn := range needsUpdate {
 
+			// search for files needing updates
 			result, err = LDAPSearch(l, c.Binddn, c.Password, dn, []string{})
 			if err != nil {
 				// In case dn changes before we can search again
@@ -123,52 +123,73 @@ func main() {
 			}
 
 			// generate files based on objectClass
-			for _, entry := range result.Entries {
-				// no need for the for loop because we pull one at a time like this:
-				log.Println(result.Entries[0])
-				//				if slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedGlobalConfig") || slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedVRRPInstanceConfig") || slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedVRRPGroupConfig") {
-				if slices.Contains(entry.GetAttributeValues("objectClass"), "keepalivedGlobalConfig") {
-
-					f := Kalived{}
-					err = entry.Unmarshal(&f)
-					if err != nil {
-						log.Fatalf("Unmarshal error: %v\n", err)
-					}
-
-					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
-					}
-
-					err = FormatKeepalivedGlobal(f)
-					// debugging
-					//log.Println(KeepalivedGlobal.String())
-
-					if err != nil {
-						log.Fatalf("Formatting error: %v\n", err)
-					}
-
-					if c.Debug {
-            log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
-          }
+			entry := result.Entries[0]
+			found = false
+			for _, oc := range entry.GetAttributeValues("objectClass") {
 				
-				} else {
+				switch oc {
+					case "keepalivedGlobalConfig":
+						f := Kalived{}
+						err = entry.Unmarshal(&f)
+						if err != nil {
+							log.Fatalf("Unmarshal error: %v\n", err)
+						}
 
-					f := File{}
-					err = entry.Unmarshal(&f)
-					if err != nil {
-						log.Fatalf("Unmarshal error: %v\n", err)
-					}
+						if c.Debug {
+							log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						}
 
-					if c.Debug {
-						log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
-					}
+						err = FormatKeepalivedGlobal(f)
 
-					err = writeFile(f.Path, f.Data, f.Perm)
-					if err != nil {
-						log.Fatalf("File generation error: %v\n", err)
-					}
+						if err != nil {
+							log.Fatalf("Formatting error: %v\n", err)
+						}
+
+						found = true
+						break
+					case "keepalivedVRRPGroupConfig":
+						//format
+						found = true
+						break
+					case "keepalivedVRRPInstanceConfig":
+						//format
+						found = true
+						break
 				}
+
 			}
+
+			if found != true {
+	  
+					f := File{}
+          err = entry.Unmarshal(&f)
+          if err != nil {
+            log.Fatalf("Unmarshal error: %v\n", err)
+          }
+
+          if c.Debug {
+            log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
+          }
+
+          err = writeFile(f.Path, f.Data, f.Perm)
+          if err != nil {
+            log.Fatalf("File generation error: %v\n", err)
+          }
+	
+			}
+
+		}
+
+
+		// write keepalived files
+		for file, data := range KeepalivedFiles {
+
+			if c.Debug {
+	      log.Printf("Writing config file to %s\n", file)
+			}
+
+			writeFile(file, data, "")
+
 		}
 
 		// loop if in daemon mode
@@ -217,6 +238,7 @@ func writeFile(path string, data string, perm string) error {
 
 	return nil
 }
+
 
 func findConfig() ([]byte, error) {
 
