@@ -1,4 +1,4 @@
-# BUREAU: Centralized Configuration Agent (FIRST RELEASE COMING SOON)
+# :card_index: BUREAU: Centralized Configuration Agent
 
 A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall schema.
 
@@ -21,9 +21,6 @@ Bureau intelligently finds and updates relevant config files from your LDAP serv
   - Global settings
   - Sync group
   - VRRP instance
-
-# Full Example Setup
-
 
 # v1.0 Roadmap
 - [ ] Additional schemas (ssh, system, sssd)

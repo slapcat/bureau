@@ -23,9 +23,9 @@ type Config struct {
 }
 
 var (
-	paths						map[string]string
-	needsUpdate			[]string
-	found						bool
+	paths           map[string]string
+	needsUpdate     []string
+	found           bool
 	KeepalivedFiles map[string]string
 )
 
@@ -77,7 +77,7 @@ func main() {
 
 	// init paths map for tracking updates and data
 	paths = make(map[string]string)
-  KeepalivedFiles = make(map[string]string)
+	KeepalivedFiles = make(map[string]string)
 
 	for {
 
@@ -126,70 +126,106 @@ func main() {
 			entry := result.Entries[0]
 			found = false
 			for _, oc := range entry.GetAttributeValues("objectClass") {
-				
+
 				switch oc {
-					case "keepalivedGlobalConfig":
-						f := Kalived{}
-						err = entry.Unmarshal(&f)
-						if err != nil {
-							log.Fatalf("Unmarshal error: %v\n", err)
-						}
+				case "keepalivedGlobalConfig":
+					f := Kalived{}
+					err = entry.Unmarshal(&f)
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
 
-						if c.Debug {
-							log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
-						}
+					if c.Debug {
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+					}
 
-						err = FormatKeepalivedGlobal(f)
+					err = FormatKeepalived(f, "global")
 
-						if err != nil {
-							log.Fatalf("Formatting error: %v\n", err)
-						}
+					if err != nil {
+						log.Fatalf("Formatting error: %v\n", err)
+					}
 
-						found = true
-						break
-					case "keepalivedVRRPGroupConfig":
-						//format
-						found = true
-						break
-					case "keepalivedVRRPInstanceConfig":
-						//format
-						found = true
-						break
+					found = true
+					break
+				case "keepalivedVRRPGroupConfig":
+					f := Kalived{}
+					err = entry.Unmarshal(&f)
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
+
+					if c.Debug {
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+					}
+
+					err = FormatKeepalived(f, "group")
+
+					if err != nil {
+						log.Fatalf("Formatting error: %v\n", err)
+					}
+
+					found = true
+					break
+				case "keepalivedVRRPInstanceConfig":
+
+					f := Kalived{}
+					err = entry.Unmarshal(&f)
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
+
+					if c.Debug {
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+					}
+
+					err = FormatKeepalived(f, "instance")
+
+					if err != nil {
+						log.Fatalf("Formatting error: %v\n", err)
+					}
+
+					found = true
+					break
 				}
 
 			}
 
 			if found != true {
-	  
-					f := File{}
-          err = entry.Unmarshal(&f)
-          if err != nil {
-            log.Fatalf("Unmarshal error: %v\n", err)
-          }
 
-          if c.Debug {
-            log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
-          }
+				f := File{}
+				err = entry.Unmarshal(&f)
+				if err != nil {
+					log.Fatalf("Unmarshal error: %v\n", err)
+				}
 
-          err = writeFile(f.Path, f.Data, f.Perm)
-          if err != nil {
-            log.Fatalf("File generation error: %v\n", err)
-          }
-	
+				if c.Debug {
+					log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
+				}
+
+				err = writeFile(f.Path, f.Data, f.Perm)
+				if err != nil {
+					log.Fatalf("File generation error: %v\n", err)
+				}
+
 			}
 
 		}
-
 
 		// write keepalived files
 		for file, data := range KeepalivedFiles {
 
 			if c.Debug {
-	      log.Printf("Writing config file to %s\n", file)
+				log.Printf("Writing config file to %s\n", file)
 			}
 
-			writeFile(file, data, "")
+			err = writeFile(file, data, "")
+			if err != nil {
+				log.Fatalf("File generation error: %v\n", err)
+				// make this non-fatal later and then:
+				// continue
+			}
 
+			delete(KeepalivedFiles, file)
 		}
 
 		// loop if in daemon mode
@@ -217,7 +253,7 @@ func writeFile(path string, data string, perm string) error {
 	}
 
 	// use exec because of type issue with os.Chmod
-	cmd := exec.Command("chmod", perm, path + ".tmp")
+	cmd := exec.Command("chmod", perm, path+".tmp")
 	cmd.Stderr = os.Stdout
 	if err := cmd.Run(); err != nil {
 		return err
@@ -231,14 +267,13 @@ func writeFile(path string, data string, perm string) error {
 	}
 
 	// move into place if write is good
-	err = os.Rename(path + ".tmp", path)
+	err = os.Rename(path+".tmp", path)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
-
 
 func findConfig() ([]byte, error) {
 
@@ -247,7 +282,7 @@ func findConfig() ([]byte, error) {
 	home, err := os.UserHomeDir()
 	locations := []string{home + "/.bureau.yaml",
 		home + "/.config/bureau/bureau.yaml",
-		"/etc/bureau/bureau.yaml", "bureau.yaml"}
+		"/etc/bureau/bureau.yaml"}
 
 	for _, path := range locations {
 		if _, err = os.Stat(path); err == nil {
