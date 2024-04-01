@@ -3,23 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/go-ldap/ldap/v3"
 	"log"
 	"text/template"
 )
 
-type File struct {
-	DN          string   `ldap:"dn"`
-	Path        string   `ldap:"path"`
-	Description string   `ldap:"description"`
-	CN          string   `ldap:"cn"`
-	ObjectClass []string `ldap:"objectClass"`
-	Data        string   `ldap:"data"`
-	Perm        string   `ldap:"permissions"`
-}
-
 type Kalived struct {
 	Path                        string   `ldap:"path"`
 	Perm                        string   `ldap:"permissions"`
+	ServiceName                 string   `ldap:"serviceName"`
 	GlobalNotificationEmail     []string `ldap:"globalNotificationEmail"`
 	GlobalNotificationEmailFrom string   `ldap:"globalNotificationEmailFrom"`
 	GlobalSMTPServer            string   `ldap:"globalSMTPServer"`
@@ -52,11 +44,16 @@ type Kalived struct {
 	NotifyFaultVRRPInstance  string   `ldap:"notifyFaultVRRPInstance"`
 }
 
-func FormatKeepalived(inter any, class string) error {
+func FormatKeepalived(entry *ldap.Entry, class string) error {
 
-	f := inter.(Kalived)
+	f := Kalived{}
+	err := entry.Unmarshal(&f)
+	if err != nil {
+		log.Fatalf("Unmarshal error: %v\n", err)
+	}
+
 	var tmpl *template.Template
-	var err error
+	//var err error
 
 	switch class {
 	case "global":
@@ -129,7 +126,7 @@ vrrp_instance {{.InstanceName}} {
 	}
 
 	var newData bytes.Buffer
-	err = tmpl.Execute(&newData, inter.(Kalived))
+	err = tmpl.Execute(&newData, f)
 	if err != nil {
 		log.Fatalf("Template creation error: %v\n", err)
 	}

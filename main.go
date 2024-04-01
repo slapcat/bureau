@@ -22,6 +22,17 @@ type Config struct {
 	Override string `yaml:"override_hostname"`
 }
 
+type File struct {
+	DN          string   `ldap:"dn"`
+	Path        string   `ldap:"path"`
+	Description string   `ldap:"description"`
+	CN          string   `ldap:"cn"`
+	ObjectClass []string `ldap:"objectClass"`
+	Data        string   `ldap:"data"`
+	Perm        string   `ldap:"permissions"`
+	ServiceName string   `ldap:"serviceName"`
+}
+
 var (
 	paths           map[string]string
 	needsUpdate     []string
@@ -129,18 +140,12 @@ func main() {
 
 				switch oc {
 				case "keepalivedGlobalConfig":
-					f := Kalived{}
-					err = entry.Unmarshal(&f)
-					if err != nil {
-						log.Fatalf("Unmarshal error: %v\n", err)
-					}
 
 					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, entry.GetAttributeValues("path"))
 					}
 
-					err = FormatKeepalived(f, "global")
-
+					err = FormatKeepalived(entry, "global")
 					if err != nil {
 						log.Fatalf("Formatting error: %v\n", err)
 					}
@@ -148,18 +153,12 @@ func main() {
 					found = true
 					break
 				case "keepalivedVRRPGroupConfig":
-					f := Kalived{}
-					err = entry.Unmarshal(&f)
-					if err != nil {
-						log.Fatalf("Unmarshal error: %v\n", err)
-					}
 
 					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, entry.GetAttributeValues("path"))
 					}
 
-					err = FormatKeepalived(f, "group")
-
+					err = FormatKeepalived(entry, "group")
 					if err != nil {
 						log.Fatalf("Formatting error: %v\n", err)
 					}
@@ -168,18 +167,11 @@ func main() {
 					break
 				case "keepalivedVRRPInstanceConfig":
 
-					f := Kalived{}
-					err = entry.Unmarshal(&f)
-					if err != nil {
-						log.Fatalf("Unmarshal error: %v\n", err)
-					}
-
 					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, entry.GetAttributeValues("path"))
 					}
 
-					err = FormatKeepalived(f, "instance")
-
+					err = FormatKeepalived(entry, "instance")
 					if err != nil {
 						log.Fatalf("Formatting error: %v\n", err)
 					}
@@ -207,6 +199,11 @@ func main() {
 					log.Fatalf("File generation error: %v\n", err)
 				}
 
+				err = checkRestart(c.Restart, f.ServiceName)
+				if err != nil {
+					log.Printf("Service \"%s\" failed to restart: %v\n", f.ServiceName, err)
+				}
+
 			}
 
 		}
@@ -223,6 +220,11 @@ func main() {
 				log.Fatalf("File generation error: %v\n", err)
 				// make this non-fatal later and then:
 				// continue
+			}
+
+			err = checkRestart(c.Restart, "keepalived")
+			if err != nil {
+				log.Printf("Service \"%s\" failed to restart: %v\n", "keepalived", err)
 			}
 
 			delete(KeepalivedFiles, file)
@@ -297,4 +299,18 @@ func findConfig() ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func checkRestart(enabled bool, svc string) error {
+
+	if enabled && svc != "" {
+		cmd := exec.Command("systemctl", "restart", svc)
+		cmd.Stderr = os.Stdout
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }
