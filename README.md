@@ -7,23 +7,81 @@ A lightweight agent for syncing configuration files from LDAP. Includes custom s
 # Configuration
 Bureau intelligently finds and updates relevant config files from your LDAP server, so minimal configuration is necessary.
 
+**bureau.yaml**
+```yaml
+debug: true
+daemon: true
+update_interval: 600
+restart_service_on_change: true
+
+server: ldap://ldap.example.com
+binddn: cn=bureau,ou=services,dc=example,dc=com
+password: poop
+base: ou=config,dc=example,dc=com
+host_specific_entries: true
+override_hostname:
+```
+
+**Location**
+The bureau configuration is looked for in these locations in order of precedence:
+- ~/.bureau.yaml
+- ~/.config/bureau/bureau.yaml
+- /etc/bureau/bureau.yaml
+
+**Daemon Mode**
+`daemon` mode will run the bureau binary as a service. Only use this mode if you are not using an init system like `systemd`. `update_interval` specifies the number of seconds between each LDAP search for new config files when running in daemon mode. (For systemd, update the bureau.timer unit file.)
+
+**Host Specific Entries**
+This settings indicates that all relevant config files for the current host are stored under `cn=<hostname>,<base>`, for example `cn=web01,ou=config,dc=example,dc=com`. The entries under this DN can be grouped or named however you wish. If you disable this option, bureau will sync all config files listed under the base DN.
+
+In some cases it is useful to specify an identical set of config files for multiple systems. This can be achieved by setting an `override_hostname`. This option designates the CommonName used when searching for config files. For example, setting `override_hostname` to `desktop` will search for config files under `cn=desktop,ou=config,dc=example,dc=com`.
+
 # Quickstart
-1. Install LDAP schemas and add configuration files.
+1. Add the schemas to your LDAP directory:
+```
+git clone https://github.com/slapcat/bureau.git
+ldapadd -Y EXTERNAL -H ldapi:/// -f bureau/schemas/configFile.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f bureau/schemas/keepalivedGlobalConfig.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f bureau/schemas/keepalivedVRRPGroupConfig.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f bureau/schemas/keepalivedVRRPInstanceConfig.ldif
+```
 
-2. Enter LDAP server information into configuration file (`/etc/bureau/bureau.yaml`, `~/.config/bureau/bureau.yaml`, or `~/.bureau.yaml`).
+2. Create a test config file:
+```
+ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
+dn: cn=bureau,cn=<hostname>,ou=config,dc=example,dc=com
+path: /tmp/bureau-test.txt
+cn: bureau
+data: Hello World!
+objectClass: configFile
+objectClass: top
+EOF
+```
 
-3. Start `bureau` in daemon mode or with systemd.
+3. Install bureau on your target system and addn the LDAP server credentials to the `bureau.yaml` file.
+
+4. Start bureau in daemon mode or with systemd:
+```
+./bureau &                         # daemon
+systemctl enable --now bureau      # systemd
+```
+
+5. The new file should be available instantly:
+```
+$ cat /tmp/bureau-test.txt
+Hello World!
+```
 
 # Built-in Schemas
-- Default
+- configFile
   - Any file, any location
 - Keepalived
-  - Global settings
-  - Sync group
-  - VRRP instance
+  - keepalivedGlobalConfig
+  - keepalivedVRRPGroupConfig
+  - keepalivedVRRPInstanceConfig
 
 # v1.0 Roadmap
-- [ ] Additional schemas (ssh, system, sssd)
+- [ ] Additional schemas (ssh, systemd, sssd)
 - [ ] Kubernetes (configMap) support
 - [ ] Secrets management
 
