@@ -23,15 +23,18 @@ override_hostname:
 ```
 
 **Location**
+
 The bureau configuration is looked for in these locations in order of precedence:
 - ~/.bureau.yaml
 - ~/.config/bureau/bureau.yaml
 - /etc/bureau/bureau.yaml
 
 **Daemon Mode**
+
 `daemon` mode will run the bureau binary as a service. Only use this mode if you are not using an init system like `systemd`. `update_interval` specifies the number of seconds between each LDAP search for new config files when running in daemon mode. (For systemd, update the bureau.timer unit file.)
 
 **Host Specific Entries**
+
 This settings indicates that all relevant config files for the current host are stored under `cn=<hostname>,<base>`, for example `cn=web01,ou=config,dc=example,dc=com`. The entries under this DN can be grouped or named however you wish. If you disable this option, bureau will sync all config files listed under the base DN.
 
 In some cases it is useful to specify an identical set of config files for multiple systems. This can be achieved by setting an `override_hostname`. This option designates the CommonName used when searching for config files. For example, setting `override_hostname` to `desktop` will search for config files under `cn=desktop,ou=config,dc=example,dc=com`.
@@ -58,7 +61,7 @@ objectClass: top
 EOF
 ```
 
-3. Install bureau on your target system and addn the LDAP server credentials to the `bureau.yaml` file.
+3. Install bureau on your target system and addn the LDAP server credentials to `bureau.yaml`.
 
 4. Start bureau in daemon mode or with systemd:
 ```
@@ -75,7 +78,7 @@ Hello World!
 # Built-in Schemas
 - configFile
   - Any file, any location
-- Keepalived
+- Keepalived-specific
   - keepalivedGlobalConfig
   - keepalivedVRRPGroupConfig
   - keepalivedVRRPInstanceConfig
