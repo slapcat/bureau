@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/go-ldap/ldap/v3"
 	"log"
+	"bytes"
 	"text/template"
+	"github.com/go-ldap/ldap/v3"
 )
 
 type Kalived struct {

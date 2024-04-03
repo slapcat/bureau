@@ -1,8 +1,8 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
+	"crypto/tls"
 	"github.com/go-ldap/ldap/v3"
 )
 

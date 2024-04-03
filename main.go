@@ -1,12 +1,12 @@
 package main
 
 import (
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"time"
 	"os/exec"
 	"reflect"
-	"time"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {

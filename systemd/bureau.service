@@ -1,0 +1,10 @@
+[Unit]
+Description=bureau configuration agent
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bureau
+
+[Install]
+WantedBy=multi-user.target

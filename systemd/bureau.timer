@@ -1,0 +1,13 @@
+[Unit]
+Description=bureau timer
+RefuseManualStart=no 
+RefuseManualStop=no
+
+[Timer]
+Persistent=true
+OnBootSec=120
+OnUnitActiveSec=600
+Unit=bureau.service
+
+[Install]
+WantedBy=timers.target

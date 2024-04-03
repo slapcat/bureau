@@ -2,8 +2,6 @@
 
 A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall schema.
 
-<!-- asciicinema -->
-
 # Configuration
 Bureau intelligently finds and updates relevant config files from your LDAP server, so minimal configuration is necessary.
 
