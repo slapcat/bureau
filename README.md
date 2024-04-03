@@ -59,13 +59,22 @@ objectClass: top
 EOF
 ```
 
-3. Install bureau on your target system and addn the LDAP server credentials to `bureau.yaml`.
+3. Install bureau on your target system and add the LDAP server credentials to `bureau.yaml`.
 
 4. Start bureau in daemon mode or with systemd:
 ```
-./bureau &                         # daemon
-systemctl enable --now bureau      # systemd
+./bureau &                               # daemon
+systemctl enable --now bureau.timer      # systemd
 ```
+
+Systemd will generate files owned by `root:root`. If you want to use bureau for user files, you can copy the systemd unit files to the user-specific directory:
+```
+cp /etc/systemd/system/bureau.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user --now bureau.timer bureau.service
+```
+
+The `bureau.timer` unit file runs every 5 minutes by default.
 
 5. The new file should be available instantly:
 ```
