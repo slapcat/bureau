@@ -282,7 +282,8 @@ func findConfig() ([]byte, error) {
 	var conf string
 
 	home, err := os.UserHomeDir()
-	locations := []string{home + "/.bureau.yaml",
+	locations := []string{"bureau.yaml",
+		home + "/.bureau.yaml",
 		home + "/.config/bureau/bureau.yaml",
 		"/etc/bureau/bureau.yaml"}
 

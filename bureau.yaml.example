@@ -1,4 +1,4 @@
-debug: true
+debug: false
 daemon: true
 update_interval: 600
 restart_service_on_change: true

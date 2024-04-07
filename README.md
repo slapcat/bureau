@@ -23,13 +23,14 @@ override_hostname:
 **Location**
 
 The bureau configuration is looked for in these locations in order of precedence:
+- same directory as the binary
 - ~/.bureau.yaml
 - ~/.config/bureau/bureau.yaml
 - /etc/bureau/bureau.yaml
 
 **Daemon Mode**
 
-`daemon` mode will run the bureau binary as a service. Only use this mode if you are not using an init system like `systemd`. `update_interval` specifies the number of seconds between each LDAP search for new config files when running in daemon mode. (For systemd, update the bureau.timer unit file.)
+`daemon` mode will run the bureau binary as a service. This mode is the default in order to benefit from bureau's in-memory tracking of LDAP changes, which will only pull entire entries if they have a more recent `modifyTimestamp` than the previous time it was checked. It is recommended to use daemon mode in addition to the systemd service. `update_interval` specifies the number of seconds between each LDAP search for new config files.
 
 **Host Specific Entries**
 
@@ -64,17 +65,15 @@ EOF
 4. Start bureau in daemon mode or with systemd:
 ```
 ./bureau &                               # daemon
-systemctl enable --now bureau.timer      # systemd
+systemctl enable --now bureau.service    # systemd
 ```
 
-Systemd will generate files owned by `root:root`. If you want to use bureau for user files, you can copy the systemd unit files to the user-specific directory:
+Systemd will generate files owned by `root:root`. If you want to use bureau for user files, you can copy the systemd unit file to the user-specific directory:
 ```
-cp /etc/systemd/system/bureau.* ~/.config/systemd/user/
+cp /etc/systemd/system/bureau.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user --now bureau.timer bureau.service
+systemctl enable --user --now bureau.service
 ```
-
-The `bureau.timer` unit file runs every 5 minutes by default.
 
 5. The new file should be available instantly:
 ```
@@ -91,8 +90,9 @@ Hello World!
   - keepalivedVRRPInstanceConfig
 
 # v1.0 Roadmap
-- [ ] Additional schemas (ssh, systemd, sssd)
+- [ ] Additional schemas
 - [ ] Kubernetes (configMap) support
+- [ ] LXD instance config support
 - [ ] Secrets management
 
 Raise an issue to request any other services you want to see supported.
