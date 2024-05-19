@@ -91,8 +91,9 @@ Hello World!
 
 # v1.0 Roadmap
 - [ ] Additional schemas
+- [ ] Two-way sync
+- [ ] End-to-end encryption
+- [ ] Notifications
 - [ ] Kubernetes (configMap) support
-- [ ] LXD instance config support
-- [ ] Secrets management
 
 Raise an issue to request any other services you want to see supported.

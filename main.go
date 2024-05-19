@@ -100,26 +100,43 @@ func main() {
 		defer l.Close()
 
 		// Bind and search for timestamps
-		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp"})
+		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp", "path"})
 		if err != nil {
 			log.Fatalf("LDAP search error: %v\n", err)
 			continue
 		}
 
+		
 		// mark files that need updating
 		for _, entry := range result.Entries {
+		
+		/*
 			if val, ok := paths[entry.DN]; ok {
 				if entry.GetAttributeValue("modifyTimestamp") == val {
 					// no update needed
 					continue
 				}
 			}
-
-			log.Printf("%s is outdated\n", entry.DN)
-			needsUpdate = append(needsUpdate, entry.DN)
-			paths[entry.DN] = entry.GetAttributeValue("modifyTimestamp")
-
+		*/
+			mostRecent, err := compareModificationTimes(entry.GetAttributeValue("path"), entry.GetAttributeValue("modifyTimestamp"))
+			if err != nil {
+			  log.Printf("Could not compare modification times: %v\n", err)
+			}
+			
+			switch mostRecent {
+			case "equal":
+				// nothing to do
+			case "file":
+				log.Printf("%s is outdated\n", entry.GetAttributeValue("path"))
+				needsUpdate = append(needsUpdate, entry.DN)
+				paths[entry.DN] = entry.GetAttributeValue("modifyTimestamp")
+			case "ldap":
+				log.Printf("%s is outdated\n", entry.DN)
+				log.Println("Not able to update directory yet...")
+			}
 		}
+
+os.Exit(0)
 
 		// grab file data from LDAP
 		for _, dn := range needsUpdate {
@@ -239,6 +256,30 @@ func main() {
 		}
 
 	}
+}
+
+func compareModificationTimes(path string, timestamp string) (string, error) {
+
+	// parse file mod time
+	fileInfo, err := os.Stat(path) 
+	if err != nil { 
+		log.Fatalf("File read error for %s: %v\n", path, err) 
+  } 
+	fileMTime := fileInfo.ModTime().Truncate(60 * time.Second)
+
+	// parse ldap mod time
+	ldapMTime, _ := time.Parse("20060102150405Z0700", timestamp)
+	ldapMTime = ldapMTime.Truncate(60 * time.Second)
+
+	// compare
+	if fileMTime.Equal(ldapMTime) {
+		return "equal", nil
+	} else if ldapMTime.After(fileMTime) {
+		return "file", nil
+	} else {
+		return "ldap", nil
+	}
+
 }
 
 func writeFile(path string, data string, perm string) error {
