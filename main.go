@@ -110,14 +110,6 @@ func main() {
 		// mark files that need updating
 		for _, entry := range result.Entries {
 		
-		/*
-			if val, ok := paths[entry.DN]; ok {
-				if entry.GetAttributeValue("modifyTimestamp") == val {
-					// no update needed
-					continue
-				}
-			}
-		*/
 			mostRecent, err := compareModificationTimes(entry.GetAttributeValue("path"), entry.GetAttributeValue("modifyTimestamp"))
 			if err != nil {
 			  log.Printf("Could not compare modification times: %v\n", err)
@@ -135,8 +127,6 @@ func main() {
 				log.Println("Not able to update directory yet...")
 			}
 		}
-
-os.Exit(0)
 
 		// grab file data from LDAP
 		for _, dn := range needsUpdate {
