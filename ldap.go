@@ -47,3 +47,16 @@ func LDAPSearch(l *ldap.Conn, binddn string, password string, base string, attr 
 		return nil, fmt.Errorf("Couldn't fetch search entries")
 	}
 }
+
+func LDAPReplace(l *ldap.Conn, DN string, data []byte) error {
+
+	modify := ldap.NewModifyRequest(DN, nil)
+
+	modify.Replace("data", []string{string(data)})
+	err := l.Modify(modify)
+	if err != nil {
+			return err
+	}
+
+	return nil
+}

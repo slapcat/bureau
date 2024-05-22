@@ -97,7 +97,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("Connection error: %v\n", err)
 		}
-		defer l.Close()
 
 		// Bind and search for timestamps
 		result, err := LDAPSearch(l, c.Binddn, c.Password, hostdn, []string{"modifyTimestamp", "path"})
@@ -124,8 +123,19 @@ func main() {
 				paths[entry.DN] = entry.GetAttributeValue("modifyTimestamp")
 			case "ldap":
 				log.Printf("%s is outdated\n", entry.DN)
-				log.Println("Not able to update directory yet...")
+
+				fileData, err := os.ReadFile(entry.GetAttributeValue("path"))
+				if err != nil {
+					log.Printf("Could not read %s: %v\n", entry.GetAttributeValue("path"), err)
+				}
+
+				err = LDAPReplace(l, entry.DN, fileData)
+				if err != nil {
+					log.Printf("Could not update LDAP: %v\n", err)
+				}
+				log.Printf("%s has been updated", entry.DN)
 			}
+
 		}
 
 		// grab file data from LDAP
@@ -237,6 +247,8 @@ func main() {
 			delete(KeepalivedFiles, file)
 		}
 
+		l.Close()
+		
 		// loop if in daemon mode
 		if c.Daemon {
 			needsUpdate = nil
