@@ -90,7 +90,6 @@ Hello World!
   - keepalivedVRRPInstanceConfig
 
 # v1.0 Roadmap
-- [ ] Additional schemas
 - [X] Two-way sync
 - [ ] Prometheus remote write support
 - [ ] Kubernetes (configMap) support
