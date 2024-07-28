@@ -91,9 +91,8 @@ Hello World!
 
 # v1.0 Roadmap
 - [ ] Additional schemas
-- [ ] Two-way sync
-- [ ] End-to-end encryption
-- [ ] Notifications
+- [X] Two-way sync
+- [ ] Prometheus remote write support
 - [ ] Kubernetes (configMap) support
 
 Raise an issue to request any other services you want to see supported.
