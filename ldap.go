@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"crypto/tls"
+	"fmt"
 	"github.com/go-ldap/ldap/v3"
 )
 
-func LDAPConnect(host string) (*ldap.Conn, error) {
+func LDAPConnect() (*ldap.Conn, error) {
 
-	l, err := ldap.DialURL(host)
+	l, err := ldap.DialURL(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -21,9 +21,9 @@ func LDAPConnect(host string) (*ldap.Conn, error) {
 	return l, nil
 }
 
-func LDAPSearch(l *ldap.Conn, binddn string, password string, base string, attr []string) (*ldap.SearchResult, error) {
+func LDAPSearch(l *ldap.Conn, base string, attr []string) (*ldap.SearchResult, error) {
 
-	l.Bind(binddn, password)
+	l.Bind(c.Binddn, c.Password)
 
 	searchReq := ldap.NewSearchRequest(
 		base,
@@ -48,15 +48,4 @@ func LDAPSearch(l *ldap.Conn, binddn string, password string, base string, attr 
 	}
 }
 
-func LDAPReplace(l *ldap.Conn, DN string, data []byte) error {
-
-	modify := ldap.NewModifyRequest(DN, nil)
-
-	modify.Replace("data", []string{string(data)})
-	err := l.Modify(modify)
-	if err != nil {
-			return err
-	}
-
-	return nil
-}
+// LDAPWrite
