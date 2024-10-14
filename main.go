@@ -7,6 +7,8 @@ import (
 )
 
 var c Config
+var f File
+var k Kalived
 
 func main() {
 

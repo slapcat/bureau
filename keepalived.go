@@ -5,8 +5,17 @@ import (
 	"log"
 	"bytes"
 	"text/template"
-	"github.com/go-ldap/ldap/v3"
 )
+
+type File struct {
+	DN          string   `ldap:"dn"`
+	Path        string   `ldap:"path"`
+	Description string   `ldap:"description"`
+	CN          string   `ldap:"cn"`
+	ObjectClass []string `ldap:"objectClass"`
+	Data        string   `ldap:"data"`
+	Perm        string   `ldap:"permissions"`
+}
 
 type Kalived struct {
 	Path                        string   `ldap:"path"`
@@ -44,16 +53,11 @@ type Kalived struct {
 	NotifyFaultVRRPInstance  string   `ldap:"notifyFaultVRRPInstance"`
 }
 
-func FormatKeepalived(entry *ldap.Entry, class string) error {
+func FormatKeepalived(inter any, class string) error {
 
-	f := Kalived{}
-	err := entry.Unmarshal(&f)
-	if err != nil {
-		log.Fatalf("Unmarshal error: %v\n", err)
-	}
-
+	f := inter.(Kalived)
 	var tmpl *template.Template
-	//var err error
+	var err error
 
 	switch class {
 	case "global":
