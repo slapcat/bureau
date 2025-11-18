@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
 	"os"
+	"log"
 	"time"
 )
 
 var c Config
-var f File
-var k Kalived
+//var f File
+//var k Kalived
 
 func main() {
 

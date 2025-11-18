@@ -7,19 +7,16 @@ import (
 	"text/template"
 )
 
-type File struct {
-	DN          string   `ldap:"dn"`
-	Path        string   `ldap:"path"`
-	Description string   `ldap:"description"`
-	CN          string   `ldap:"cn"`
-	ObjectClass []string `ldap:"objectClass"`
-	Data        string   `ldap:"data"`
-	Perm        string   `ldap:"permissions"`
-}
+var (
+	KeepalivedFiles		map[string]string
+	KeepalivedMap			map[string]Kalived
+)
 
 type Kalived struct {
+	DN													string   `ldap:"dn"`
 	Path                        string   `ldap:"path"`
 	Perm                        string   `ldap:"permissions"`
+	Mtime                       string   `ldap:"modifyTimestamp"`
 	ServiceName                 string   `ldap:"serviceName"`
 	GlobalNotificationEmail     []string `ldap:"globalNotificationEmail"`
 	GlobalNotificationEmailFrom string   `ldap:"globalNotificationEmailFrom"`
@@ -58,6 +55,7 @@ func FormatKeepalived(inter any, class string) error {
 	f := inter.(Kalived)
 	var tmpl *template.Template
 	var err error
+	KeepalivedMap = make(map[string]Kalived)
 
 	switch class {
 	case "global":
@@ -114,10 +112,10 @@ vrrp_instance {{.InstanceName}} {
 	{{if .VirtualIPAddressExcluded}}}virtual_ipaddress_excluded {
 	  {{range .VirtualIPAddressExcluded}}{{.}}
 		{{end -}}
-	}{{end}}
-	{{if .NotifyMasterVRRPInstance}}notify_master {{.NotifyMasterVRRPInstance}}
-	{{end}}{{if .NotifyBackupVRRPInstance}}notify_backup {{.NotifyBackupVRRPInstance}}
-	{{end}}{{if .NotifyFaultVRRPInstance}}notify_fault {{.NotifyFaultVRRPInstance}}{{end}}
+	}{{end -}}
+	{{if .NotifyMasterVRRPInstance}}notify_master {{.NotifyMasterVRRPInstance}}{{end -}}
+	{{if .NotifyBackupVRRPInstance}}notify_backup {{.NotifyBackupVRRPInstance}}{{end -}}
+	{{if .NotifyFaultVRRPInstance}}notify_fault {{.NotifyFaultVRRPInstance}}{{end}}
 }
 `)
 
@@ -136,6 +134,8 @@ vrrp_instance {{.InstanceName}} {
 	}
 
 	KeepalivedFiles[f.Path] = KeepalivedFiles[f.Path] + newData.String()
+
+	KeepalivedMap[f.DN] = f
 
 	return nil
 }

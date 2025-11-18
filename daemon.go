@@ -1,20 +1,19 @@
 package main
 
 import (
+	"os"
 	"log"
+	"time"
 )
 
 var (
-	paths						map[string]string
-	needsUpdate			[]string
-	found						bool
-	KeepalivedFiles map[string]string
+	Files						map[string]File
 )
 
 func Summon() {
 
 	// init paths map for tracking updates and data
-	paths = make(map[string]string)
+	Files = make(map[string]File)
   KeepalivedFiles = make(map[string]string)
 
 	// LDAP connect
@@ -24,73 +23,95 @@ func Summon() {
 	}
 	defer l.Close()
 
-	// Bind and search for timestamps
-	result, err := LDAPSearch(l, c.HostDN, []string{"modifyTimestamp"})
+	// Bind and search for files that need updating
+	result, err := LDAPSearch(l, c.HostDN, []string{"modifyTimestamp", "path"})
 	if err != nil {
-		log.Fatalf("LDAP search error: %v\n", err)
-		//continue
+		log.Printf("LDAP search error: %v\n", err)
 	}
+
 	// mark files that need updating
 	for _, entry := range result.Entries {
-		if val, ok := paths[entry.DN]; ok {
-			if entry.GetAttributeValue("modifyTimestamp") == val {
-				// no update needed
-				continue
+
+		// Import to struct
+		f := File{}
+		err = entry.Unmarshal(&f)
+		if err != nil {
+			log.Fatalf("Unmarshal error: %v\n", err)
+		}
+
+		// Get file mtime
+		info, err := os.Stat(f.Path)
+   	if err != nil {
+			log.Printf("Could not get file info: %v\n", err)
+
+			// File doesn't exist, schedule update
+			if os.IsNotExist(err) {
+				Files[f.DN] = f
+				break
 			}
 		}
 
-		log.Printf("%s is outdated\n", entry.DN)
-		needsUpdate = append(needsUpdate, entry.DN)
-		paths[entry.DN] = entry.GetAttributeValue("modifyTimestamp")
+		// Get ldap mtime
+		mtime, err := convertLDAPtoRFC3339(f.Mtime)
+		if err != nil {
+			log.Printf("Failed converting LDAP time to RFC3339: %v\n", err)
+			continue
+		}   
 
+		// Compare LDAP and file mtime
+		if mtime.After(info.ModTime()) {
+			log.Printf("%s is outdated\n", f.DN)
+			Files[f.DN] = f
+		}
 	}
 
-	// grab file data from LDAP
-	for _, dn := range needsUpdate {
 
-		// search for files needing updates
-		result, err = LDAPSearch(l, dn, []string{})
+	// Grab file data from LDAP for files needing update
+	for _, file := range Files {
+
+		// Request remaining attributes from LDAP and add to struct
+		result, err = LDAPSearch(l, file.DN, []string{"*", "+"})
 		if err != nil {
-			// In case dn changes before we can search again
-			// Print error but do not exit
 			log.Printf("LDAP search error: %v\n", err)
 			continue
 		}
 
+		err = result.Entries[0].Unmarshal(&file)
+		if err != nil {
+			log.Fatalf("Unmarshal error: %v\n", err)
+		}
+
 		// generate files based on objectClass
-		entry := result.Entries[0]
-		found = false
-		for _, oc := range entry.GetAttributeValues("objectClass") {
+		for i, oc := range file.ObjectClass {
 			
 			switch oc {
+
 				case "keepalivedGlobalConfig":
 					f := Kalived{}
-					err = entry.Unmarshal(&f)
+					err = result.Entries[0].Unmarshal(&f)
 					if err != nil {
 						log.Fatalf("Unmarshal error: %v\n", err)
 					}
 
 					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						log.Printf("Formatting keepalived config for %s at %s\n", f.DN, f.Path)
 					}
 
 					err = FormatKeepalived(f, "global")
-
 					if err != nil {
 						log.Fatalf("Formatting error: %v\n", err)
 					}
 
-					found = true
 					break
 				case "keepalivedVRRPGroupConfig":
 					f := Kalived{}
-					err = entry.Unmarshal(&f)
+					err = result.Entries[0].Unmarshal(&f)
 					if err != nil {
 						log.Fatalf("Unmarshal error: %v\n", err)
 					}
 
 					if c.Debug {
-						log.Printf("Formatting keepalived config for %s at %s\n", entry.DN, f.Path)
+						log.Printf("Formatting keepalived config for %s at %s\n", f.DN, f.Path)
 					}
 
 					err = FormatKeepalived(f, "group")
@@ -99,48 +120,85 @@ func Summon() {
 						log.Fatalf("Formatting error: %v\n", err)
 					}					
 
-					found = true
 					break
 				case "keepalivedVRRPInstanceConfig":
-					//format
-					found = true
+					f := Kalived{}
+					err = result.Entries[0].Unmarshal(&f)
+					if err != nil {
+						log.Fatalf("Unmarshal error: %v\n", err)
+					}
+
+					if c.Debug {
+						log.Printf("Formatting keepalived config for %s at %s\n", f.DN, f.Path)
+					}
+
+					err = FormatKeepalived(f, "instance")
+
+					if err != nil {
+						log.Fatalf("Formatting error: %v\n", err)
+					}					
+
 					break
+
+				default:
+
+					if i == len(file.ObjectClass) - 1 {
+						f := Files[file.DN]
+						err = result.Entries[0].Unmarshal(&f)
+						if err != nil {
+							log.Fatalf("Unmarshal error: %v\n", err)
+						}
+
+						if c.Debug {
+							log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
+						}   
+
+						mtime, err := convertLDAPtoRFC3339(f.Mtime)
+						if err != nil {
+							log.Printf("Failed converting LDAP time to RFC3339: %v\n", err)
+							continue
+						}   
+
+						err = WriteFile(f.Path, f.Data, f.Perm, mtime)
+						if err != nil {
+							log.Fatalf("File generation error: %v\n", err)
+						}   
+					
+						delete(Files, f.DN)
+					}
 			}
 
 		}
-
-		if found != true {
-	
-				f := File{}
-				err = entry.Unmarshal(&f)
-				if err != nil {
-					log.Fatalf("Unmarshal error: %v\n", err)
-				}
-
-				if c.Debug {
-					log.Printf("Writing config file for %s at %s\n", f.CN, f.Path)
-				}
-
-				err = WriteFile(f.Path, f.Data, f.Perm)
-				if err != nil {
-					log.Fatalf("File generation error: %v\n", err)
-				}
-
-		}
-
 	}
 
 
-	// write keepalived files
-	for file, data := range KeepalivedFiles {
+	for _, kfile := range KeepalivedMap {
 
 		if c.Debug {
-			log.Printf("Writing config file to %s\n", file)
+			log.Printf("Writing config file to %s\n", kfile.Path)
 		}
 
-		WriteFile(file, data, "")
+		mtime, err := convertLDAPtoRFC3339(kfile.Mtime)
+		if err != nil {
+			log.Printf("Failed converting LDAP time to RFC3339: %v\n", err)
+			continue
+		}   
 
+		WriteFile(kfile.Path, KeepalivedFiles[kfile.Path], "", mtime)
+
+		// remove all LDAP entries related to this file path
+		for dn, data := range KeepalivedMap {
+			if data.Path == kfile.Path {
+				delete(KeepalivedMap, dn)
+			}
+		}
 	}
+	
+}
 
-	needsUpdate = nil
+func convertLDAPtoRFC3339(mtime string) (time.Time, error) {
+	const ldapLayout = "20060102150405Z"
+	t, err := time.Parse(ldapLayout, mtime)
+
+	return t, err
 }

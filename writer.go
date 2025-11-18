@@ -2,10 +2,11 @@ package main
 
 import (
 	"os"
+	"time"
 	"os/exec"
 )
 
-func WriteFile(path string, data string, perm string) error {
+func WriteFile(path string, data string, perm string, mtime time.Time) error {
 
 	// create tmp file
 	f, err := os.Create(path + ".tmp")
@@ -34,6 +35,13 @@ func WriteFile(path string, data string, perm string) error {
 
 	// move into place if write is good
 	err = os.Rename(path+".tmp", path)
+	if err != nil {
+		return err
+	}
+
+	// Change the file's access and modification times
+	atime := mtime
+	err = os.Chtimes(path, atime, mtime)
 	if err != nil {
 		return err
 	}

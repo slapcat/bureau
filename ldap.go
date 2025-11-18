@@ -1,8 +1,8 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
+	"crypto/tls"
 	"github.com/go-ldap/ldap/v3"
 )
 
@@ -47,5 +47,3 @@ func LDAPSearch(l *ldap.Conn, base string, attr []string) (*ldap.SearchResult, e
 		return nil, fmt.Errorf("Couldn't fetch search entries")
 	}
 }
-
-// LDAPWrite
