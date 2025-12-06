@@ -2,6 +2,13 @@
 
 A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall schema.
 
+# Features
+- RFC-compliant (works with OpenLDAP, 389, Active Directory, etc.)
+- Custom schemas with globally valid OIDs
+- Modifiable templates for application-specific configs
+- Practical for both servers and individual users on desktops
+- Fast and lightweight
+
 # Configuration
 Bureau intelligently finds and updates relevant config files from your LDAP server, so minimal configuration is necessary.
 
@@ -14,7 +21,7 @@ restart_service_on_change: true
 
 server: ldap://ldap.example.com
 binddn: cn=bureau,ou=services,dc=example,dc=com
-password: poop
+password: SomeSecretPassword
 base: ou=config,dc=example,dc=com
 host_specific_entries: true
 override_hostname:
@@ -89,9 +96,5 @@ Hello World!
   - keepalivedVRRPGroupConfig
   - keepalivedVRRPInstanceConfig
 
-# v1.0 Roadmap
-- [X] Two-way sync
-- [ ] Multi-platform support
-- [ ] Kubernetes (configMap) support
-
+# Feature Requests Welcome!
 Raise an issue to request any other services you want to see natively supported.

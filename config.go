@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-	"log"
+	"fmt"
 	"reflect"
 	"gopkg.in/yaml.v3"
 )
@@ -19,7 +19,7 @@ type Config struct {
 	Restart     bool   `yaml:"restart_service_on_change" default:"true"`
 	Override    string `yaml:"override_hostname"`
 	HostDN      string
-  Local2LDAP  bool   `yaml:"sync_local_changes" default:"false"`
+	Local2LDAP  bool   `yaml:"sync_local_changes" default:"false"`
 }
 
 func ConfigInit() (Config, error) {
@@ -47,27 +47,24 @@ func ConfigInit() (Config, error) {
 	}
 
 	err = yaml.Unmarshal(data, &c)
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	} else if c.Debug {
+	Logger(err, "Unmarshal error", "FATAL")
+
+	if c.Debug {
 		for i := 0; i <= 9; i++ {
 			key := reflect.Indirect(reflect.ValueOf(c)).Type().Field(i).Name
 			value := reflect.ValueOf(c)
 			if key == "Password" && c.Password != "" {
-				log.Printf(" === Loading configuration %v: %s\n", key, "***HIDDEN PASSWORD***")
+				Logger(nil, fmt.Sprintf("Loading configuration %v: %s\n", key, "***HIDDEN PASSWORD***"), "DEBUG")
 			} else {
-				log.Printf(" === Loading configuration %v: %v\n", key, value.FieldByName(key))
+				Logger(nil, fmt.Sprintf("Loading configuration %v: %v\n", key, value.FieldByName(key)), "DEBUG")
 			}
 		}
 	}
 
 	// get hostname and set search base
 	host, err := os.Hostname()
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	} else if c.Debug {
-		log.Printf(" === Getting hostname: %s", host)
-	}
+	Logger(err, "Error", "FATAL")
+	Logger(nil, "Getting hostname: "+host, "DEBUG")
 
 	if c.Host {
 		if c.Override != "" {
@@ -78,9 +75,7 @@ func ConfigInit() (Config, error) {
 	} else {
 		c.HostDN = c.Base
 	}
-	if c.Debug {
-		log.Printf(" === Looking for files in: %s", c.HostDN)
-	}
+	Logger(nil, "Looking for files in: "+c.HostDN, "DEBUG")
 
 	return c, nil
 }

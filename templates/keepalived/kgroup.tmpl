@@ -1,0 +1,9 @@
+vrrp_sync_group {{.GroupName}} {
+	group {
+		{{range .GroupMember}}{{.}}
+		{{end}}
+	}
+	{{if .NotifyMasterVRRPGroup}}notify_master {{.NotifyMasterVRRPGroup}}
+	{{end}}{{if .NotifyBackupVRRPGroup}}notify_backup {{.NotifyBackupVRRPGroup}}
+	{{end}}{{if .NotifyFaultVRRPGroup}}notify_fault {{.NotifyFaultVRRPGroup}}{{end}}
+}

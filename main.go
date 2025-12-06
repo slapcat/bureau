@@ -2,26 +2,24 @@ package main
 
 import (
 	"os"
-	"log"
 	"time"
 )
 
 var c Config
-//var f File
-//var k Kalived
 
 func main() {
 
 	// load bureau config
 	c, err := ConfigInit()
-	if err != nil {
-		log.Fatalf("Error reading config file: %v", err)
-	}
+	Logger(err, "Error reading config file", "FATAL")
 
 	for {
 
 		// run daemon once
 		Summon()
+
+		// Cleanup
+		Tpl = nil
 
 		// loop if in daemon mode
 		if c.Daemon {
