@@ -1,16 +1,17 @@
 # :card_index: BUREAU: Centralized Configuration Agent
 
-A lightweight agent for syncing configuration files from LDAP. Includes custom schemas for supported services as well as a default catchall schema.
+Bureau is a lightweight agent designed to synchronize configuration files from an LDAP server. It supports custom schemas for specific services and includes a default catchall schema.
 
 # Features
-- RFC-compliant (works with OpenLDAP, 389, Active Directory, etc.)
-- Custom schemas with globally valid OIDs
-- Modifiable templates for application-specific configs
-- Practical for both servers and individual users on desktops
-- Fast and lightweight
+
+- **RFC-Compliant:** Works with standard LDAP servers (OpenLDAP, Active Directory, 389, etc.).
+- **Customizable:**  Uses globally valid OIDs and modifiable templates for application-specific configurations.
+- **Versatile:** Practical for both servers and desktop users.
+- **Fast & Efficient:** Lightweight design with in-memory tracking of LDAP changes.
 
 # Configuration
-Bureau intelligently finds and updates relevant config files from your LDAP server, so minimal configuration is necessary.
+
+Bureau requires minimal setup, intelligently finding and updating relevant config files.
 
 **bureau.yaml**
 ```yaml
