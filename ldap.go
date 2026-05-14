@@ -7,8 +7,8 @@ import (
 )
 
 func LDAPConnect() (*ldap.Conn, error) {
-
-	l, err := ldap.DialURL(c.Server)
+	
+	l, err := ldap.DialURL(C.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func LDAPConnect() (*ldap.Conn, error) {
 
 func LDAPSearch(l *ldap.Conn, base string, attr []string) (*ldap.SearchResult, error) {
 
-	l.Bind(c.Binddn, c.Password)
+	l.Bind(C.Binddn, C.Password)
 
 	searchReq := ldap.NewSearchRequest(
 		base,

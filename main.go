@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-var c Config
+var C Config
 
 func main() {
 
 	// load bureau config
-	c, err := ConfigInit()
+	C, err := ConfigInit()
 	Logger(err, "Error reading config file", "FATAL")
-
+	
 	for {
 
 		// run daemon once
@@ -22,8 +22,8 @@ func main() {
 		Tpl = nil
 
 		// loop if in daemon mode
-		if c.Daemon {
-			time.Sleep(time.Duration(c.Update) * time.Second)
+		if C.Daemon {
+			time.Sleep(time.Duration(C.Update) * time.Second)
 		} else {
 			os.Exit(0)
 		}

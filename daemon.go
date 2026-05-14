@@ -20,7 +20,7 @@ func Summon() {
 	defer l.Close()
 
 	// Bind and search for files that need updating
-	result, err := LDAPSearch(l, c.HostDN, []string{"modifyTimestamp", "path"})
+	result, err := LDAPSearch(l, C.HostDN, []string{"modifyTimestamp", "path"})
 	Logger(err, "LDAP search error", "WARN")
 
 	// mark files that need updating
