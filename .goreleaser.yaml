@@ -29,6 +29,11 @@ nfpms:
   formats:
   - deb
   - rpm
+  contents:
+    - src: ./systemd/bureau.service
+      dst: /usr/lib/systemd/system/bureau.service
+    - src: ./bureau.yaml.example
+      dst: /etc/bureau/bureau.yaml.example
 
 changelog:
   sort: asc
