@@ -60,7 +60,7 @@ ldapadd -Y EXTERNAL -H ldapi:/// -f bureau/schemas/keepalivedVRRPInstanceConfig.
 ```
 ldapadd -Y EXTERNAL -H ldapi:/// <<EOF
 dn: cn=bureau,cn=<hostname>,ou=config,dc=example,dc=com
-path: /tmp/bureau-test.txt
+path: /tmp/bureau.txt
 cn: bureau
 data: Hello World!
 objectClass: configFile
@@ -78,15 +78,15 @@ systemctl enable --now bureau.service    # systemd
 
 Systemd will generate files owned by `root:root`. If you want to use bureau for user files, you can copy the systemd unit file to the user-specific directory:
 ```
-cp /etc/systemd/system/bureau.service ~/.config/systemd/user/
+cp /usr/lib/systemd/system/bureau.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl enable --user --now bureau.service
 ```
 
 5. The new file should be available instantly:
 ```
-$ cat /tmp/bureau-test.txt
-Hello World!
+$ cat /tmp/bureau.txt
+Hello world!
 ```
 
 # Built-in Schemas
@@ -96,6 +96,3 @@ Hello World!
   - keepalivedGlobalConfig
   - keepalivedVRRPGroupConfig
   - keepalivedVRRPInstanceConfig
-
-# Feature Requests Welcome!
-Raise an issue to request any other services you want to see natively supported.
